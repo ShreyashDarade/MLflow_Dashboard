@@ -43,7 +43,7 @@
 Clone the repository and install the dependencies:
 
 ```bash
-git clone https://github.com/your_username/ShreyashDarade.git
+git clone https://github.com/ShreyashDarade/MLflow_Dashboard.git
 cd ShreyashDarade
 pip install -r requirements.txt
 ```
