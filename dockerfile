@@ -12,7 +12,7 @@ COPY requirements.txt .
 RUN pip install --upgrade pip && pip install --no-cache-dir -r requirements.txt
 
 # Copy all project files into the container
-COPY mlflow_utils.py ,streamlit_app.py ,train_multiple_models.py ,train_random_forest.py /app/
+COPY mlflow_utils.py streamlit_app.py train_multiple_models.py /app/
 
 # Expose port 8501 (default port for Streamlit)
 EXPOSE 8501

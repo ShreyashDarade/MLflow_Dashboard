@@ -267,22 +267,30 @@ if uploaded_file:
                 st.success(f"Trained {chosen_model} and logged to MLflow (run_id={run.info.run_id}).")
                 st.write("Metrics:", metrics)
 
-                # Register
-                model_uri = f"runs:/{run.info.run_id}/model"
-                reg_model_details = mlflow.register_model(model_uri=model_uri, name=reg_model_name)
-                new_version = reg_model_details.version
-                st.write(f"Registered new version: {new_version}")
-
-                # Possibly wait for registration to complete
-                time.sleep(3)
+                # Resolve the newly created registered model version for this run
+                new_version = None
+                for _ in range(10):
+                    versions = get_model_versions(reg_model_name)
+                    for v in versions:
+                        if getattr(v, "run_id", None) == run.info.run_id:
+                            new_version = v.version
+                            break
+                    if new_version is not None:
+                        break
+                    time.sleep(1)
+                if new_version is None:
+                    st.warning("Could not resolve the new registered version; promotion step will be skipped.")
+                else:
+                    st.write(f"Registered new version: {new_version}")
 
                 # Promote if better
-                if task_type == "Regression":
-                    # We'll use "MAE" as the key, lower is better
-                    promote_new_model_if_better(reg_model_name, new_version, run.info.run_id, metric_key="MAE", higher_is_better=False)
-                else:
-                    # We'll use "f1" as the key, higher is better
-                    promote_new_model_if_better(reg_model_name, new_version, run.info.run_id, metric_key="f1", higher_is_better=True)
+                if new_version is not None:
+                    if task_type == "Regression":
+                        # We'll use "MAE" as the key, lower is better
+                        promote_new_model_if_better(reg_model_name, new_version, run.info.run_id, metric_key="MAE", higher_is_better=False)
+                    else:
+                        # We'll use "f1" as the key, higher is better
+                        promote_new_model_if_better(reg_model_name, new_version, run.info.run_id, metric_key="f1", higher_is_better=True)
 
 #############################################
 # Compare Runs
