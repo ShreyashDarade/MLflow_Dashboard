@@ -200,14 +200,18 @@ def train_models(args):
                 else:
                     mlflow.sklearn.log_model(model_obj, artifact_path="model", registered_model_name=args.registered_model_name)
 
-            # End run
+            # Resolve the newly created registered model version for this run
             run_id = run.info.run_id
-            mlflow.end_run()
-
-            # Register the newly logged model version
-            model_uri = f"runs:/{run_id}/model"
-            reg_model_details = mlflow.register_model(model_uri=model_uri, name=args.registered_model_name)
-            new_version = reg_model_details.version
+            new_version = None
+            for _ in range(10):
+                versions = get_model_versions(args.registered_model_name)
+                for v in versions:
+                    if getattr(v, "run_id", None) == run_id:
+                        new_version = v.version
+                        break
+                if new_version is not None:
+                    break
+                time.sleep(1)
 
             # If regression, we assume lower MAE is better
             # If classification, we assume higher f1 is better

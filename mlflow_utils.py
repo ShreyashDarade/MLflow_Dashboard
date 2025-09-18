@@ -107,6 +107,11 @@ def promote_new_model_if_better(model_name, new_version, new_run_id, metric_key=
         if best_metric is None or (higher_is_better and m > best_metric) or (not higher_is_better and m < best_metric):
             best_metric = m
             best_version = v.version
+    # If no valid metric was found across versions, skip transitions
+    if best_version is None:
+        print(f"No valid metric '{metric_key}' found for any version of {model_name}. Skipping stage transitions.")
+        return
+
     # Transition the best to Production, others to Staging
     for v in versions:
         if v.version == best_version:
